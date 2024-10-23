@@ -1,32 +1,32 @@
 #include <iostream>
 using namespace std;
 
-struct Patient{
-    string name;
+struct Patient{ // Struct for storing patient details
+    string name; 
     string gender;
     int contact;
     int priority;
     Patient *next;
 };
-class PriorityList{
+class PriorityList{ // Class for managing a priority list of patients
     Patient *head;
-    int beds = 10;
+    int beds = 10; // Number of available hospital beds (initially 10)
     public:
         PriorityList(){
             head = NULL;
         }
-        void AddToList(string n, string g, int c, int p){
-            Patient *nn = new Patient;
+        void AddToList(string n, string g, int c, int p){ // Function to add a new patient to the priority list
+            Patient *nn = new Patient; 
             nn -> name = n;
             nn -> gender = g;
             nn -> contact = c;
             nn -> priority = p;
-            nn -> next = NULL;
-            if(head == NULL || head -> priority < p){
+            nn -> next = NULL; 
+            if(head == NULL || head -> priority < p){  // If the list is empty or the new patient has higher priority, insert at the head
                 nn -> next = head;
                 head = nn;
             }
-            else{
+            else{ // Traverse the list to find the correct position for the new patient
                 Patient *temp = head;
                 while(temp -> next != NULL && temp -> next -> priority >= p){
                     temp = temp -> next;
@@ -35,7 +35,7 @@ class PriorityList{
                 temp -> next = nn;
             }
         }
-        void ShowList(){
+        void ShowList(){ // Function to display the list of patients
             Patient *temp = head;
             if(head == NULL){
                 cout << "Empty List" << endl;
@@ -46,12 +46,12 @@ class PriorityList{
                 temp = temp -> next;
             }
         }
-        void AssignBed(){
+        void AssignBed(){ // Function to assign a bed to the patient with the highest priority
             if(head == NULL){
                 cout << "No patients in the list" << endl;
                 return;
-            }
-            if(beds != 0){
+            } 
+            if(beds != 0){ // Check if there are beds available
                 Patient *ptbd = head;
                 cout << head -> name << " " << head -> gender << " " << head -> contact << " " << "Has been asssigned a bed in the Hospital" << endl;
                 head = head -> next;
@@ -63,7 +63,7 @@ class PriorityList{
                 cout << "Sorry no beds available at the moment" << endl;
             }
         }
-        void checkBedAvailablity(){
+        void checkBedAvailablity(){ // Function to check the number of available beds
             if(beds == 0){
                 cout << "Sorry no beds available at the moment";
                 return;
@@ -72,7 +72,7 @@ class PriorityList{
                 cout << "Beds Available :" << beds << endl;
             }
         }
-        void searchPatient(string n){
+        void searchPatient(string n){ // Function to search for a patient by name
             if(head == NULL){
                 cout << "No patients registered in the list" << endl;
                 return;
@@ -92,7 +92,7 @@ class PriorityList{
                 return;
             }
         }
-        void patientStatus(string n){
+        void patientStatus(string n){ // Function to check the position of a patient in the queue
             int count = 0;
             Patient *temp = head;
             while(temp != NULL){
@@ -111,7 +111,7 @@ class PriorityList{
             cout << "Patient " << n << "is " << count << "th in the queue" << endl;
             return;
         }
-        void countPatients(){
+        void countPatients(){ // Function to count the total number of patients
             Patient *temp = head;
             int count = 0;
             while(temp != NULL){
@@ -120,7 +120,10 @@ class PriorityList{
             }
             cout << "Total Patients on the List: " << count << endl;
         }
-        void clearPatientList(){
+        void clearPatientList(){  // Function to clear the patient list
+        if(head == NULL){
+            cout << "List already empty" << endl;
+        }
             while(head != NULL){
                 Patient *ptbd = head;
                 head = head -> next;
@@ -177,6 +180,7 @@ int main() {
                 break;
             case 8:
                 P.clearPatientList();
+                break;
             case 9:
                 return 0;
         }
