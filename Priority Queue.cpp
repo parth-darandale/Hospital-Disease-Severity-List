@@ -15,6 +15,16 @@ class PriorityList{ // Class for managing a priority list of patients
         PriorityList(){
             head = NULL;
         }
+        void clearBed(){
+            if(beds <= 10){
+                beds += 1;
+                return;
+            }
+            else{
+                cout << "Beds at full capacity" << endl;
+                return;
+            }
+        }
         void AddToList(string n, string g, int c, int p){ // Function to add a new patient to the priority list
             Patient *nn = new Patient; 
             nn -> name = n;
@@ -140,14 +150,14 @@ int main() {
     PriorityList P;
     int option, m, p;
     string n, g;
-    cout << "1) Add patient to List \n 2) Show List \n 3) Assign Bed \n 4) Check Bed Availability \n 5) Search Patient \n 6) Count Patients \n 7) Check Patient Status \n 8) Clear Patient List \n 9) Reset Bed \n 10) Exit" << endl;
+    cout << "1) Add patient to List \n 2) Show List \n 3) Assign Bed \n 4) Check Bed Availability \n 5) Search Patient \n 6) Count Patients \n 7) Check Patient Status \n 8) Clear Patient List \n 9) Reset Bed \n 10) Clear Bed \n 11) Exit" << endl;
     while(1){
         cout << "Enter option: ";
         cin >> option;
-        cin.ignore();
         switch(option){
             case 1:
                 cout << "Enter name: ";
+                cin.ignore();
                 getline(cin, n);
                 cout << "Enter gender: ";
                 cin >> g;
@@ -155,7 +165,7 @@ int main() {
                 cin >> m;
                 cout << "Enter severity in range(1 - 10): ";
                 cin >> p;
-                while(p < 1 || p > 10){
+                while(p < 1 || p > 11){
                     cout << "Enter severity in range(1 - 10): ";
                     cin >> p;
                 }
@@ -189,6 +199,9 @@ int main() {
                 P.resetBed();
                 break;
             case 10:
+                P.clearBed();
+                break;
+            case 11:
                 return 0;
         }
     }
