@@ -121,9 +121,9 @@ class PriorityList{ // Class for managing a priority list of patients
             cout << "Total Patients on the List: " << count << endl;
         }
         void clearPatientList(){  // Function to clear the patient list
-        if(head == NULL){
-            cout << "List already empty" << endl;
-        }
+            if(head == NULL){
+                cout << "List already empty" << endl;
+            }
             while(head != NULL){
                 Patient *ptbd = head;
                 head = head -> next;
@@ -131,12 +131,16 @@ class PriorityList{ // Class for managing a priority list of patients
                 delete ptbd;
             }
         }
+        void resetBed(){
+            beds = 10;
+            cout << "Beds now reseted to 10" << endl;
+        }
 };
 int main() {
     PriorityList P;
     int option, m, p;
     string n, g;
-    cout << "1) Add patient to List \n 2) Show List \n 3) Assign Bed \n 4) Check Bed Availability \n 5) Search Patient \n 6) Count Patients \n 7) Check Patient Status \n 8) Clear Patient List \n 9) Exit" << endl;
+    cout << "1) Add patient to List \n 2) Show List \n 3) Assign Bed \n 4) Check Bed Availability \n 5) Search Patient \n 6) Count Patients \n 7) Check Patient Status \n 8) Clear Patient List \n 9) Reset Bed \n 10) Exit" << endl;
     while(1){
         cout << "Enter option: ";
         cin >> option;
@@ -182,6 +186,9 @@ int main() {
                 P.clearPatientList();
                 break;
             case 9:
+                P.resetBed();
+                break;
+            case 10:
                 return 0;
         }
     }
