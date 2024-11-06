@@ -1,5 +1,8 @@
 #include <iostream>
 #include <string>
+#include <thread>
+#include <chrono>
+#include <mutex>
 using namespace std;
 
 struct Node {
@@ -7,6 +10,7 @@ struct Node {
     string gender;
     int contact;
     int priority;
+    int treatmentTime; // Treatment time in seconds
     Node *next;
 };
 
@@ -14,15 +18,18 @@ class Linkedlist {
 public:
     Node *head;
     Linkedlist() { head = NULL; }
+    mutex listMutex; // Mutex for thread safety
 
-    void addPatient(string n, string g, int c, int p) {
+    void addPatient(string n, string g, int c, int p, int t) {
         Node *nn = new Node;
         nn->name = n;
         nn->gender = g;
         nn->contact = c;
         nn->priority = p;
+        nn->treatmentTime = t;
         nn->next = NULL;
 
+        lock_guard<mutex> lock(listMutex); // Lock for thread safety
         if (head == NULL || head->priority < p) {
             nn->next = head;
             head = nn;
@@ -37,21 +44,22 @@ public:
     }
 
     void showList() {
+        lock_guard<mutex> lock(listMutex); // Lock for thread safety
         Node *temp = head;
         while (temp != NULL) {
             cout << "Name: " << temp->name << ", Gender: " << temp->gender
-                 << ", Contact: " << temp->contact << ", Priority: " << temp->priority << endl;
+                 << ", Contact: " << temp->contact << ", Priority: " << temp->priority
+                 << ", Treatment Time: " << temp->treatmentTime << "s" << endl;
             temp = temp->next;
         }
     }
 
     void removeHead() {
+        lock_guard<mutex> lock(listMutex); // Lock for thread safety
         if (head != NULL) {
             Node *temp = head;
             head = head->next;
             delete temp;
-        } else {
-            cout << "No patients to discharge in this treatment list.\n";
         }
     }
 };
@@ -69,7 +77,7 @@ class Lists {
 public:
     void addPatientToWaitlist() {
         string name, gender;
-        int contact, priority;
+        int contact, priority, treatmentTime;
         cout << "Enter Patient Name: ";
         cin >> name;
         cout << "Enter Gender (M/F): ";
@@ -78,99 +86,82 @@ public:
         cin >> contact;
         cout << "Enter Priority (1-10): ";
         cin >> priority;
-        L1.addPatient(name, gender, contact, priority);
+        cout << "Enter Treatment Time in seconds: ";
+        cin >> treatmentTime;
+        L1.addPatient(name, gender, contact, priority, treatmentTime);
         cout << "Patient added to waitlist.\n";
     }
 
-    void assignWard() {
-        if (L1.head == NULL) {
-            cout << "No patients in the waitlist.\n";
-            return;
-        }
+    void assignDoctor(Linkedlist &ward, Linkedlist &treatmentList, int &doctorCount) {
+        if (ward.head != NULL && doctorCount > 0) {
+            treatmentList.addPatient(ward.head->name, ward.head->gender, ward.head->contact, ward.head->priority, ward.head->treatmentTime);
+            int treatmentTime = ward.head->treatmentTime; // Get treatment time for thread
+            cout << ward.head->name << " assigned a doctor. Treatment in progress for " << treatmentTime << " seconds.\n";
+            ward.removeHead();
+            doctorCount--;
 
-        if (L1.head->priority <= 5 && general_wards > 0) {
-            L2.addPatient(L1.head->name, L1.head->gender, L1.head->contact, L1.head->priority);
-            cout << L1.head->name << " assigned to General ward.\n";
-            L1.removeHead();
-            general_wards--;
-        } else if (L1.head->priority > 5 && L1.head->priority <= 8 && icu_wards > 0) {
-            L3.addPatient(L1.head->name, L1.head->gender, L1.head->contact, L1.head->priority);
-            cout << L1.head->name << " assigned to ICU ward.\n";
-            L1.removeHead();
-            icu_wards--;
-        } else if (surgical_wards > 0) {
-            L4.addPatient(L1.head->name, L1.head->gender, L1.head->contact, L1.head->priority);
-            cout << L1.head->name << " assigned to Surgical ward.\n";
-            L1.removeHead();
-            surgical_wards--;
+            // Start a new thread to discharge the patient automatically after treatmentTime seconds
+            thread([this, &treatmentList, treatmentTime]() {
+                this_thread::sleep_for(chrono::seconds(treatmentTime));
+                if (treatmentList.head != NULL) {
+                    cout << "Auto-discharging: " << treatmentList.head->name << " from treatment list.\n";
+                    treatmentList.removeHead();
+                }
+            }).detach();
+        } else if (ward.head == NULL) {
+            cout << "No patients in the selected ward.\n";
         } else {
-            cout << "All wards are full. Cannot accommodate.\n";
+            cout << "Doctors busy. Please wait.\n";
         }
     }
 
     void assignDoctor_general_ward() {
-        if (L2.head != NULL && general_doctor > 0) {
-            T1.addPatient(L2.head->name, L2.head->gender, L2.head->contact, L2.head->priority);
-            cout << L2.head->name << " assigned a general doctor. Treatment in progress.\n";
-            L2.removeHead();
-            general_doctor--;
-        } else if (L2.head == NULL) {
-            cout << "No patients in General Ward.\n";
-        } else {
-            cout << "General doctors busy. Please wait.\n";
-        }
+        assignDoctor(L2, T1, general_doctor);
     }
 
     void assignDoctor_icu_ward() {
-        if (L3.head != NULL && pseudo_specialist > 0) {
-            T2.addPatient(L3.head->name, L3.head->gender, L3.head->contact, L3.head->priority);
-            cout << L3.head->name << " assigned a pseudo specialist. Treatment in progress.\n";
-            L3.removeHead();
-            pseudo_specialist--;
-        } else if (L3.head == NULL) {
-            cout << "No patients in ICU Ward.\n";
-        } else {
-            cout << "ICU doctors busy. Please wait.\n";
-        }
+        assignDoctor(L3, T2, pseudo_specialist);
     }
 
     void assignDoctor_surgery_ward() {
-        if (L4.head != NULL && specialist > 0) {
-            T3.addPatient(L4.head->name, L4.head->gender, L4.head->contact, L4.head->priority);
-            cout << L4.head->name << " assigned a specialist. Treatment in progress.\n";
-            L4.removeHead();
-            specialist--;
-        } else if (L4.head == NULL) {
-            cout << "No patients in Surgery Ward.\n";
-        } else {
-            cout << "Specialists busy. Please wait.\n";
-        }
+        assignDoctor(L4, T3, specialist);
     }
 
     void discharge(int ward) {
-        if (ward == 1 && T1.head != NULL) {
-            cout << "Discharging from General Ward: " << T1.head->name << endl;
-            T1.removeHead();
-            if (general_wards < 4) general_wards++;
-            if (general_doctor < 3) general_doctor++;
-    
-        } else if (ward == 2 && T2.head != NULL) {
-            cout << "Discharging from ICU Ward: " << T2.head->name << endl;
-            T2.removeHead();
-            if (icu_wards < 3) icu_wards++;
-            if (pseudo_specialist < 2) pseudo_specialist++;
-    
-        } else if (ward == 3 && T3.head != NULL) {
-            cout << "Discharging from Surgery Ward: " << T3.head->name << endl;
-            T3.removeHead();
-            if (surgical_wards < 2) surgical_wards++;
-            if (specialist < 3) specialist++;
-    
-        } else {
-            cout << "Invalid option or no patients available in the treatment list for discharge.\n";
-        }
-}
+        Linkedlist *treatmentList = nullptr;
+        int *wardCount = nullptr;
+        int *doctorCount = nullptr;
 
+        switch (ward) {
+            case 1:
+                treatmentList = &T1;
+                wardCount = &general_wards;
+                doctorCount = &general_doctor;
+                break;
+            case 2:
+                treatmentList = &T2;
+                wardCount = &icu_wards;
+                doctorCount = &pseudo_specialist;
+                break;
+            case 3:
+                treatmentList = &T3;
+                wardCount = &surgical_wards;
+                doctorCount = &specialist;
+                break;
+            default:
+                cout << "Invalid option.\n";
+                return;
+        }
+
+        if (treatmentList->head != NULL) {
+            cout << "Manually discharging: " << treatmentList->head->name << endl;
+            treatmentList->removeHead();
+            if (*wardCount < 4) (*wardCount)++;
+            if (*doctorCount < 3) (*doctorCount)++;
+        } else {
+            cout << "No patients available in the selected treatment list for discharge.\n";
+        }
+    }
 
     void showWaitlist() {
         cout << "Waitlist:\n";
